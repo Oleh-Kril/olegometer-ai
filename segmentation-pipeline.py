@@ -4,8 +4,8 @@ import skimage.io
 from skimage.measure import regionprops
 from edge_segmentation import edge_segmentation, show_groups
 
-root_folder = "./real-dataset/designs-original"
-output_folder = "./real-dataset/segmented-designs-768"
+root_folder = "./real-dataset/pages-original"
+output_folder = "./real-dataset/segmented-pages-1600"
 
 # Ensure output folder exists
 os.makedirs(output_folder, exist_ok=True)
@@ -18,7 +18,7 @@ def cut_and_save(image_name, labeled_image, image, edges):
         bbox = region.bbox
         image_ui_element = image[bbox[0]:bbox[2], bbox[1]:bbox[3], :]
         # Save image_ui_element
-        output_path = os.path.join(output_folder, f"{image_name}_{i}.jpeg")
+        output_path = os.path.join(output_folder, f"{i}.jpeg")
         skimage.io.imsave(output_path, image_ui_element)
 
 
@@ -34,8 +34,10 @@ def traverse_folder(folder_path):
         # Get full path of the item
         item_path = os.path.join(folder_path, item)
 
+        print(item_path)
+
         # If it's a file, process it
-        if os.path.isfile(item_path) and item.startswith("768"):
+        if os.path.isfile(item_path) and item.startswith("1600"):
             process_image(item_path)
         # If it's a directory, recursively traverse it
         elif os.path.isdir(item_path):
