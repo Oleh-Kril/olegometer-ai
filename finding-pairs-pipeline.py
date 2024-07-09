@@ -1,5 +1,9 @@
 import csv
 import os
+import time
+import re
+
+import numpy as np
 from PIL import Image
 from matplotlib import pyplot as plt, image as mpimg
 from matplotlib.widgets import Button
@@ -21,6 +25,20 @@ def save_and_next(event):
 
 def next_image(event):
     plt.close()  # Close the current plot window
+
+
+def calculate_image_difference(image1, image2):
+    # Ensure the images are the same size
+    if image1.shape != image2.shape:
+        raise ValueError("Images must have the same dimensions.")
+
+    # Calculate the absolute difference across all channels
+    difference = np.abs(image1 - image2)
+
+    # Sum the differences for all pixels and all channels
+    total_difference = np.sum(difference)
+
+    return total_difference
 
 def resize_and_check_ratio(image1, image2):
     height1, width1 = image1.shape[:2]
@@ -51,10 +69,17 @@ def resize_and_check_ratio(image1, image2):
 
     return image1, image2
 
+def bbox_difference(image1_path, image2_path):
+    bbox1 = [int(i) for i in re.findall(r'\d+', image1_path)]
+    bbox2 = [int(i) for i in re.findall(r'\d+', image2_path)]
+
+    difference_list = [abs(b1-b2) for b1, b2 in zip(bbox1, bbox2)]
+
+    return sum(difference_list)
 # Define the paths to the folders
 folder1_path = "./real-dataset/segmented-designs/"
 folder2_path = "./real-dataset/segmented-pages/"
-labels_file = "labels_cosine.csv"
+labels_file = "labels_pixel.csv"
 
 # pairs_dict = {}
 # if os.path.exists(labels_file):
@@ -67,9 +92,9 @@ labels_file = "labels_cosine.csv"
 folder1_files = os.listdir(folder1_path)
 folder2_files = os.listdir(folder2_path)
 
-min_accessible_similarity = 0.5
+min_accessible_similarity = float('-inf')
 
-N_to_skip = 22
+N_to_skip = 0
 
 folder1_files = folder1_files[N_to_skip:]
 
@@ -78,9 +103,10 @@ all = 0
 for file1_name in folder1_files:
     all += 1
     j = 0
-    max_similarity = 0
+    max_similarity = float('-inf')
     max_similarity_pair = []
 
+    start_time = time.time()
     for file2_name in folder2_files:
         if j % 20 == 0:
             print(f"Current iteration: {j}")
@@ -96,24 +122,25 @@ for file1_name in folder1_files:
         if image1 is None or image2 is None:
             continue
 
-        # Call the function to get similarity
-        similarity_score = get_similarity(image1, image2)
 
+        # Call the function to get similarity
+        similarity_score = -1 * calculate_image_difference(image1, image2)
+        # bbox_diff = bbox_difference(image1_path, image2_path)
+        # print(similarity_score, bbox_diff)
+        # similarity_score = similarity_score - 0.002 * bbox_diff
         if similarity_score > max_similarity:
             max_similarity = similarity_score
-            # print(f"Change of pair on iteration {j}. Max similarity now is {max_similarity}")
-            # print("Current pair images")
             max_similarity_pair = [(image1_path, image2_path)]
             # print(max_similarity_pair[-1])
-
+    print(f"Time taken: {time.time() - start_time}")
 
     if max_similarity > min_accessible_similarity:
         original_path, found_path = max_similarity_pair[-1]
         # filename1 = os.path.basename(original_path)
         # filename2 = os.path.basename(found_path)
 
-        img1 = mpimg.imread(image1_path)
-        img2 = mpimg.imread(image2_path)
+        img1 = mpimg.imread(original_path)
+        img2 = mpimg.imread(found_path)
         fig, ax = plt.subplots(1, 2)
         ax[0].imshow(img1)
         ax[0].axis('off')

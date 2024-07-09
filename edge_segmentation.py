@@ -17,8 +17,8 @@ def edge_segmentation(image_path):
 
     if image.shape[-1] == 4:
         image = image[:, :, :3]
-    plt.imshow(image)
-    plt.title('image without alpha channel')
+    # plt.imshow(image)
+    # plt.title('image without alpha channel')
     # plt.show()
 
     image_wh = rgb2gray(image)
@@ -26,30 +26,31 @@ def edge_segmentation(image_path):
     # apply edge segmentation
     # plot canny edge detection
     edges = canny(image_wh)
-    plt.imshow(edges, interpolation='gaussian')
-    plt.title('Canny detector')
+    # plt.imshow(edges, interpolation='gaussian')
+    # plt.title('Canny detector')
     # plt.show()
 
-    dilated_edges = nd.binary_dilation(edges, disk(8))
+    dilated_edges = nd.binary_dilation(edges, disk(1))
 
-    plt.imshow(dilated_edges, interpolation='gaussian')
-    plt.title('Combined edges')
+    # plt.imshow(dilated_edges, interpolation='gaussian')
+    # plt.title('Combined edges')
     # plt.show()
 
     # fill regions to perform edge segmentation
     fill_im = nd.binary_fill_holes(dilated_edges)
-    plt.imshow(fill_im)
-    plt.title('Region Filling')
+    # plt.imshow(fill_im)
+    # plt.title('Region Filling')
     # plt.show()
 
     # Label connected components
-    labeled_image = label(fill_im, connectivity=2, background=0)
+    labeled_image = label(fill_im, connectivity=1, background=0)
 
     return labeled_image, image, edges
 
 def show_groups(image, labeled_image):
     # Create a color map for visualization
     num_labels = np.max(labeled_image)
+    print(num_labels)
     colors = plt.cm.jet(np.linspace(0, 1, num_labels + 1))
 
     # Visualize the labeled regions in different colors
@@ -67,5 +68,5 @@ def show_groups(image, labeled_image):
     plt.show()
 
 if __name__ == '__main__':
-    labeled_image, image, edges = edge_segmentation()
+    labeled_image, image, edges = edge_segmentation("amazon.png")
     show_groups(image, labeled_image)

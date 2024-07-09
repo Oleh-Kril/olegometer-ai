@@ -1,5 +1,6 @@
 import csv
 import os
+import time
 
 import torch
 from PIL import Image
@@ -73,7 +74,7 @@ folder2_files = os.listdir(folder2_path)
 
 min_accessible_similarity = 0.7
 
-N_to_skip = 22
+N_to_skip = 0
 
 folder1_files = folder1_files[N_to_skip:]
 
@@ -85,6 +86,7 @@ for file1_name in folder1_files:
     max_similarity = 0
     max_similarity_pair = []
 
+    start_time = time.time()
     for file2_name in folder2_files:
         if j % 20 == 0:
             print(f"Current iteration: {j}")
@@ -109,7 +111,7 @@ for file1_name in folder1_files:
             # print("Current pair images")
             max_similarity_pair = [(image1_path, image2_path)]
             # print(max_similarity_pair[-1])
-
+    print(f"Time taken: {time.time() - start_time}")
 
     if max_similarity > 0:
         original_path, found_path = max_similarity_pair[-1]

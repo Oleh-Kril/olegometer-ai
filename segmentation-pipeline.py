@@ -1,11 +1,15 @@
 import os
 import re
+import time
+
 import skimage.io
 from skimage.measure import regionprops
 from edge_segmentation import edge_segmentation, show_groups
 
-root_folder = "./real-dataset/designs-original"
-output_folder = "./real-dataset/segmented-designs-768"
+root_folder_1 = "./real-dataset/designs-original"
+root_folder_2 = "./real-dataset/pages-original"
+root_folder_flat = "./real-dataset/pages-designs-flat"
+output_folder = "./real-dataset/segmented-pages-canny"
 
 # Ensure output folder exists
 os.makedirs(output_folder, exist_ok=True)
@@ -25,7 +29,8 @@ def cut_and_save(image_name, labeled_image, image, edges):
 def process_image(image_path):
     image_name = re.sub(r'^\.\/', '', image_path.split('/')[-1])
     labeled_image, image, edges = edge_segmentation(image_path)
-    cut_and_save(image_name, labeled_image, image, edges)
+    show_groups(image, labeled_image)
+    # cut_and_save(image_name, labeled_image, image, edges)
 
 
 def traverse_folder(folder_path):
@@ -33,9 +38,10 @@ def traverse_folder(folder_path):
     for item in os.listdir(folder_path):
         # Get full path of the item
         item_path = os.path.join(folder_path, item)
+        print(item_path)
 
         # If it's a file, process it
-        if os.path.isfile(item_path) and item.startswith("768"):
+        if os.path.isfile(item_path):
             process_image(item_path)
         # If it's a directory, recursively traverse it
         elif os.path.isdir(item_path):
@@ -43,10 +49,15 @@ def traverse_folder(folder_path):
 
 
 # Main function to start the traversal from a given root folder
-def main(root_folder):
-    traverse_folder(root_folder)
+def main():
+    # traverse_folder(root_folder_1)
+    # traverse_folder(root_folder_2)
+    traverse_folder(root_folder_flat)
 
 
 # Example usage:
 if __name__ == "__main__":
-    main(root_folder)
+    start_time = time.time()
+    main()
+    end_time = time.time()
+    print(f"Execution time: {end_time - start_time}")
