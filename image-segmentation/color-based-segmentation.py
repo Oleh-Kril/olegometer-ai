@@ -6,7 +6,7 @@ from skimage import io, color, segmentation, filters
 plt.rcParams["figure.figsize"] = (12, 8)
 
 # Load image from filesystem
-# image_path = '../dataset/7b.png'
+# image_path = '../images/7b.png'
 def histogram_segmentation(image_path):
     image = io.imread(image_path)
 

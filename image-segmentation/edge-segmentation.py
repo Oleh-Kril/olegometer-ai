@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 plt.rcParams["figure.figsize"] = (12, 8)
 
-def edge_segmentation(image_path = '../dataset/7b.png'):
+def edge_segmentation(image_path = '../images/7b.png'):
     # load images and convert to grayscale
     image = io.imread(image_path)
 

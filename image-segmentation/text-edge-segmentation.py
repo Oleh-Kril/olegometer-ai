@@ -9,7 +9,7 @@ from skimage.draw import ellipse_perimeter
 plt.rcParams["figure.figsize"] = (12, 8)
 
 # Load image from filesystem
-image_path = '../dataset/4a.png'
+image_path = '../dataset/images/4a.png'
 image = io.imread(image_path)
 
 if image.shape[-1] == 4:

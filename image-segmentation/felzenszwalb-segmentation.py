@@ -6,7 +6,7 @@ from skimage import io, color, segmentation
 plt.rcParams["figure.figsize"] = (12, 8)
 
 # Load image from filesystem
-image_path = '../dataset/4b.png'
+image_path = '../dataset/images/4b.png'
 image = io.imread(image_path)
 
 if image.shape[-1] == 4:

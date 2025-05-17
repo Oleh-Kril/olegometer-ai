@@ -1,5 +1,0 @@
-train: /Users/krilooleh/PycharmProjects/Project/image-segmentation/model-based-segmentation/images/train
-val: /Users/krilooleh/PycharmProjects/Project/image-segmentation/model-based-segmentation/images/val
-
-nc: 4
-names: ['rectangle', 'text', 'group', 'image']

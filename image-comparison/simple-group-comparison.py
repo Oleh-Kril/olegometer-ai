@@ -10,8 +10,8 @@ from edge_segmentation import edge_segmentation, show_groups
 from skimage import metrics
 
 plt.rcParams["figure.figsize"] = (12, 8)
-original_img_path = '../dataset/5a.png'
-img_to_compare_path = '../dataset/5b.png'
+original_img_path = '../dataset/images/5a.png'
+img_to_compare_path = '../dataset/images/5b.png'
 
 def show_two_images(img1, img2):
     plt.subplot(1, 2, 1)

@@ -10,7 +10,7 @@ from skimage.morphology import disk
 
 plt.rcParams["figure.figsize"] = (12, 8)
 
-def edge_segmentation(image_path = '../dataset/9b.png'):
+def edge_segmentation(image_path = '../images/9b.png'):
     # load images and convert to grayscale
     image = cv2.imread(image_path)
 
