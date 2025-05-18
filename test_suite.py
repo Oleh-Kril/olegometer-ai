@@ -60,6 +60,9 @@ for img in images:
 # --- Evaluation counters ---
 total_gt_bboxes = 0
 correct_hits    = 0
+a1_correct      = 0
+a2_correct      = 0
+total_cases     = 0
 
 # --- Iterate only full pairs ---
 for case_id, imgs in cases.items():
@@ -68,6 +71,7 @@ for case_id, imgs in cases.items():
     if img_R is None or img_D is None:
         continue
 
+    total_cases += 1
     # Get predictions (mocked)
     preds = test(img_R['file_name'], img_D['file_name'])
 
@@ -86,7 +90,15 @@ for case_id, imgs in cases.items():
         # Update total GT count
         total_gt_bboxes += len(gt_bboxes)
 
-        # For each GT box, find the best‐matching pred
+        # A1: Check if differences are detected correctly
+        if (len(gt_bboxes) > 0 and len(pred_bboxes) > 0) or (len(gt_bboxes) == 0 and len(pred_bboxes) == 0):
+            a1_correct += 1
+
+        # A2: Check if all predictions match ground truth in type and count
+        if len(gt_bboxes) == len(pred_bboxes) and set(gt_labels) == set(pred_labels):
+            a2_correct += 1
+
+        # A3: Original IoU-based accuracy
         for gt_box, gt_label in zip(gt_bboxes, gt_labels):
             best_iou = 0.0
             best_idx = None
@@ -99,8 +111,14 @@ for case_id, imgs in cases.items():
             if best_iou >= 0.9 and best_idx is not None and pred_labels[best_idx] == gt_label:
                 correct_hits += 1
 
-# --- Compute and print accuracy ---
-accuracy = (correct_hits / total_gt_bboxes * 100) if total_gt_bboxes > 0 else 0
+# --- Compute and print accuracies ---
+a1_accuracy = (a1_correct / (total_cases * 2) * 100) if total_cases > 0 else 0  # *2 because we check both R and D sides
+a2_accuracy = (a2_correct / (total_cases * 2) * 100) if total_cases > 0 else 0
+a3_accuracy = (correct_hits / total_gt_bboxes * 100) if total_gt_bboxes > 0 else 0
+
+print(f"Total cases: {total_cases}")
 print(f"Total ground‐truth boxes: {total_gt_bboxes}")
 print(f"Correct hits (IoU≥0.9 & label match): {correct_hits}")
-print(f"Accuracy: {accuracy:.2f}%")
+print(f"A1 Accuracy (correct difference detection): {a1_accuracy:.2f}%")
+print(f"A2 Accuracy (correct type and count): {a2_accuracy:.2f}%")
+print(f"A3 Accuracy (IoU-based): {a3_accuracy:.2f}%")

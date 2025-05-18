@@ -57,6 +57,13 @@ def run_single_case(case_name: str,
     gt_R_boxes, gt_R_labels = gt_for(img_rec_R)
 
     def score_side(gt_boxes, gt_labels, pred_boxes, pred_labels):
+        # A1: Check if differences are detected correctly
+        a1_correct = (len(gt_boxes) > 0 and len(pred_boxes) > 0) or (len(gt_boxes) == 0 and len(pred_boxes) == 0)
+        
+        # A2: Check if all predictions match ground truth in type and count
+        a2_correct = len(gt_boxes) == len(pred_boxes) and set(gt_labels) == set(pred_labels)
+        
+        # A3: Original IoU-based accuracy
         hits = 0
         for gbox, glab in zip(gt_boxes, gt_labels):
             best = -1
@@ -68,23 +75,35 @@ def run_single_case(case_name: str,
             if best >= iou_thr and best_idx is not None \
                and pred_labels[best_idx] == glab:
                 hits += 1
-        return hits, len(gt_boxes)
+        return {
+            'a1_correct': a1_correct,
+            'a2_correct': a2_correct,
+            'hits': hits,
+            'total_gt': len(gt_boxes)
+        }
 
-    hits_D, total_D = score_side(gt_D_boxes, gt_D_labels,
-                                preds_dict['D']['bboxes'], preds_dict['D']['labels'])
-    hits_R, total_R = score_side(gt_R_boxes, gt_R_labels,
-                                preds_dict['R']['bboxes'], preds_dict['R']['labels'])
+    scores_D = score_side(gt_D_boxes, gt_D_labels,
+                         preds_dict['D']['bboxes'], preds_dict['D']['labels'])
+    scores_R = score_side(gt_R_boxes, gt_R_labels,
+                         preds_dict['R']['bboxes'], preds_dict['R']['labels'])
 
-    total_hits = hits_D + hits_R
-    total_gt = total_D + total_R
-    acc = total_hits / total_gt * 100 if total_gt else 0
+    # Combine scores from both sides
+    total_gt = scores_D['total_gt'] + scores_R['total_gt']
+    total_hits = scores_D['hits'] + scores_R['hits']
+    
+    # Calculate accuracies
+    a1_accuracy = ((scores_D['a1_correct'] + scores_R['a1_correct']) / 2) * 100
+    a2_accuracy = ((scores_D['a2_correct'] + scores_R['a2_correct']) / 2) * 100
+    a3_accuracy = (total_hits / total_gt * 100) if total_gt else 0
 
     return {
         'case': case_name,
         'gt_boxes': total_gt,
         'correct_hits': total_hits,
-        'accuracy_%': round(acc, 2)
+        'A1_accuracy_%': round(a1_accuracy, 2),
+        'A2_accuracy_%': round(a2_accuracy, 2),
+        'A3_accuracy_%': round(a3_accuracy, 2)
     }
 
 if __name__ == "__main__":
-    print(run_single_case("Case 1.3"))
+    print(run_single_case("Case 1.1"))

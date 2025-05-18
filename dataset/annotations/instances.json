@@ -366,6 +366,26 @@
       "flickr_url": "",
       "coco_url": "",
       "date_captured": 0
+    },
+    {
+      "id": 33,
+      "width": 1440,
+      "height": 1329,
+      "file_name": "Case 7.1 D.png",
+      "license": 0,
+      "flickr_url": "",
+      "coco_url": "",
+      "date_captured": 0
+    },
+    {
+      "id": 34,
+      "width": 1440,
+      "height": 1329,
+      "file_name": "Case 7.1 R.png",
+      "license": 0,
+      "flickr_url": "",
+      "coco_url": "",
+      "date_captured": 0
     }
   ],
   "annotations": [
