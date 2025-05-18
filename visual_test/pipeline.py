@@ -25,9 +25,9 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
             'MAX_HASH_MATCHES': 50,
             'HISTOGRAM_WEIGHT': .15,
             'SSIM_WEIGHT': .85,
-            'MATCH_THRESHOLD': .9,
+            'MATCH_THRESHOLD': .54,
             'POSITION_THRESHOLD': 5,
-            'SIZE_THRESHOLD': 5,
+            'SIZE_THRESHOLD': 25,
             'CANNY_LOW_THRESHOLD': 5,
             'CANNY_HIGH_THRESHOLD': 20,
             'MIN_BBOX_AREA': 100,
@@ -35,6 +35,7 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
             'LOCATION_WEIGHT' : 0.15,
             'LOCATION_SIGMA_FRAC' : 0.10,
             'MASK_MIN_DIFF': 99,
+            'WRAP_CONTAINER_SIZE_THRESHOLD': 0.2,
         }
 
     gray_D = cv2.cvtColor(img_D, cv2.COLOR_BGR2GRAY)
@@ -131,9 +132,9 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
     ]
 
     diffs_D = filter_nested_missing_elements(diffs_D)
-    diffs_R = filter_position_differences(diffs_R)
+    # diffs_R = filter_position_differences(diffs_R)
 
-    # visualize_results(img_D, img_R, diffs_D, diffs_R)
+    visualize_results(img_D, img_R, diffs_D, diffs_R)
 
     logger.info(f"Missing on R: {len(diffs_D)}, diffs on R: {len(diffs_R)}")
     return diffs_D, diffs_R

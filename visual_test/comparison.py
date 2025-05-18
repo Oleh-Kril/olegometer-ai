@@ -119,14 +119,20 @@ def compare_sizes(eD, eR, constants):
     w0, h0 = eD['bbox'][2:4]
     w1, h1 = eR['bbox'][2:4]
     
-    if abs(w0 - w1) > constants['SIZE_THRESHOLD'] or abs(h0 - h1) > constants['SIZE_THRESHOLD']:
+    # Calculate percentage differences
+    width_diff_percent = abs(w0 - w1) / w0 * 100
+    height_diff_percent = abs(h0 - h1) / h0 * 100
+    
+    if width_diff_percent > constants['SIZE_THRESHOLD'] or height_diff_percent > constants['SIZE_THRESHOLD']:
         return {
             'type': DiffType.WRONG_SIZE,
             'bbox': eR['bbox'],
             'OriginalWidth': w0,
             'CurrentWidth': w1,
             'OriginalHeight': h0,
-            'CurrentHeight': h1
+            'CurrentHeight': h1,
+            'WidthDiffPercent': width_diff_percent,
+            'HeightDiffPercent': height_diff_percent
         }
     return None
 
