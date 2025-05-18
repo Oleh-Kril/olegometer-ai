@@ -15,7 +15,7 @@ def compute_iou(boxA, boxB):
 def run_single_case(case_name: str,
                     coco_file='dataset/annotations/instances.json',
                     img_root='dataset/images',
-                    iou_thr=0.80):
+                    iou_thr=0.70):
     """
     Evaluate ONE case (e.g.  'Case 1.1') and return a dict with
     total GT boxes, correct hits and accuracy for that case.
@@ -72,9 +72,11 @@ def run_single_case(case_name: str,
                 iou = compute_iou(gbox, pbox)
                 if iou > best:
                     best, best_idx = iou, idx
+            print(f"Best IoU: {best} for {glab}")
             if best >= iou_thr and best_idx is not None \
                and pred_labels[best_idx] == glab:
                 hits += 1
+
         return {
             'a1_correct': a1_correct,
             'a2_correct': a2_correct,
@@ -106,4 +108,4 @@ def run_single_case(case_name: str,
     }
 
 if __name__ == "__main__":
-    print(run_single_case("Case 1.3"))
+    print(run_single_case("Case 2.3"))

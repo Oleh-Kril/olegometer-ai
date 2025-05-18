@@ -29,7 +29,7 @@ def closest(b, cont, axis, w_img, h_img):
 
 def compare_positions(eD, eR, parent_D, parent_R, masked_D, masked_R, constants, wrong_pos_seen):
     """
-    Compare element positions, now relative to each side’s container.
+    Compare element positions, now relative to each side's container.
     parent_D: bbox of the container in the design image (or None)
     parent_R: bbox of the container in the real image   (or None)
     """
@@ -48,9 +48,16 @@ def compare_positions(eD, eR, parent_D, parent_R, masked_D, masked_R, constants,
         return None
     wrong_pos_seen.add(key)
 
+    # Determine if this is a container-level or page-level difference
+    is_container_level = parent_D is not None
+    container_key = parent_D if is_container_level else 'page'
+
+    # Create the position difference record
     rec = {
         'bbox': eR['bbox'],
-        'type': DiffType.WRONG_POSITION_WITHIN if parent_D else DiffType.WRONG_POSITION
+        'type': DiffType.WRONG_POSITION_WITHIN if is_container_level else DiffType.WRONG_POSITION,
+        'container_key': container_key,
+        'position': (eR['bbox'][0], eR['bbox'][1])  # Store position for sorting
     }
 
     # helper to pick distances against the correct container
@@ -77,6 +84,36 @@ def compare_positions(eD, eR, parent_D, parent_R, masked_D, masked_R, constants,
 
     return rec
 
+def filter_position_differences(diffs):
+    """
+    Filter position differences to keep only the single most top-left one overall.
+    """
+    # Get all position differences
+    position_diffs = [d for d in diffs if d['type'] in [DiffType.WRONG_POSITION, DiffType.WRONG_POSITION_WITHIN]]
+    
+    if not position_diffs:
+        return diffs
+        
+    # Sort by sum of coordinates (x + y)
+    def get_sort_key(diff):
+        x, y = diff['position']
+        # If it's a container-level difference, adjust position relative to container
+        if diff['type'] == DiffType.WRONG_POSITION_WITHIN and diff['container_key'] != 'page':
+            container = diff['container_key']
+            # Adjust position relative to container
+            x = x - container[0]
+            y = y - container[1]
+        return x + y  # Sort by sum of coordinates
+    
+    sorted_diffs = sorted(position_diffs, key=get_sort_key)
+    
+    # Keep only the most top-left difference
+    filtered_diffs = [sorted_diffs[0]]
+    
+    # Add back non-position differences
+    filtered_diffs.extend([d for d in diffs if d['type'] not in [DiffType.WRONG_POSITION, DiffType.WRONG_POSITION_WITHIN]])
+    
+    return filtered_diffs
 
 def compare_sizes(eD, eR, constants):
     w0, h0 = eD['bbox'][2:4]

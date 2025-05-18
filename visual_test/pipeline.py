@@ -8,7 +8,7 @@ from visual_test.masking import create_rectangular_diff_mask
 from visual_test.element_detection import detect_elements_multiscale
 from visual_test.element_matching import match_elements
 # from visual_test.pixel_based_matching import match_elements
-from visual_test.comparison import compare_positions, compare_sizes, compare_text, filter_nested_missing_elements
+from visual_test.comparison import compare_positions, compare_sizes, compare_text, filter_nested_missing_elements, filter_position_differences
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
 handler = logging.StreamHandler()
@@ -65,12 +65,12 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
 
     for idD, eD in enumerate(elems_D):
         if idD not in matches_DR:
-            print("idD: ", idD, eD['bbox'])
-            
+            # --- missing element on R ---
             diffs_D.append({
                 'type': DiffType.MISSING_ELEMENT,
                 'bbox': eD['bbox']
             })
+            # print("idD: ", idD, eD['bbox'])
             # visualize_missing_element(img_D, img_R, eD, idD)
             continue
 
@@ -111,14 +111,27 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
                 diffs_R.append(text_diff)
 
     # remaining extra-elements on R
+    extra_containers = set()  # Track containers that are extra elements
     for j, eR in enumerate(elems_R):
         if j not in matched_R:
+            # Check if this element is a container
+            is_container = any(contains(eR['bbox'], child['bbox']) for child in elems_R if child != eR)
+            if is_container:
+                extra_containers.add(tuple(eR['bbox']))
             diffs_R.append({
                 'type': DiffType.EXTRA_ELEMENT,
                 'bbox': eR['bbox']
             })
 
+    # Filter out only children of extra containers, keeping the containers themselves
+    diffs_R = [diff for diff in diffs_R if 
+        diff['type'] != DiffType.EXTRA_ELEMENT or  # Keep non-extra elements
+        tuple(diff['bbox']) in extra_containers or  # Keep the containers themselves
+        not any(contains(container, diff['bbox']) for container in extra_containers)  # Keep elements not in containers
+    ]
+
     diffs_D = filter_nested_missing_elements(diffs_D)
+    diffs_R = filter_position_differences(diffs_R)
 
     # visualize_results(img_D, img_R, diffs_D, diffs_R)
 
