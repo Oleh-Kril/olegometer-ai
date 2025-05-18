@@ -34,6 +34,7 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
             'EDGE_DILATION_SIZES':[20, 1],
             'LOCATION_WEIGHT' : 0.15,
             'LOCATION_SIGMA_FRAC' : 0.10,
+            'MASK_MIN_DIFF': 99,
         }
 
     gray_D = cv2.cvtColor(img_D, cv2.COLOR_BGR2GRAY)
@@ -41,6 +42,12 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
 
     # Create and apply masks
     mask = create_rectangular_diff_mask(gray_D, gray_R, constants['MORPHOLOGY_KERNEL_SIZE'])
+
+    # Calculate mask coverage percentage
+    mask_coverage = (np.sum(mask > 0) / (mask.shape[0] * mask.shape[1])) * 100
+    if mask_coverage > constants['MASK_MIN_DIFF']:
+        logger.info(f"Mask coverage {mask_coverage:.2f}% exceeds threshold {constants['MASK_MIN_DIFF']}%, returning no differences")
+        return [], []
 
     elems_D, cont_D, atom_D, edges_D, _ = detect_elements_multiscale(gray_D, constants, mask=mask)
     elems_R, cont_R, atom_R, edges_R, _ = detect_elements_multiscale(gray_R, constants, mask=mask)

@@ -94,7 +94,7 @@ def run_single_case(case_name: str,
     # Calculate accuracies
     a1_accuracy = ((scores_D['a1_correct'] + scores_R['a1_correct']) / 2) * 100
     a2_accuracy = ((scores_D['a2_correct'] + scores_R['a2_correct']) / 2) * 100
-    a3_accuracy = (total_hits / total_gt * 100) if total_gt else 0
+    a3_accuracy = 100 if (total_gt == 0 and total_hits == 0) else (total_hits / total_gt * 100) if total_gt else 0
 
     return {
         'case': case_name,
@@ -106,4 +106,4 @@ def run_single_case(case_name: str,
     }
 
 if __name__ == "__main__":
-    print(run_single_case("Case 1.1"))
+    print(run_single_case("Case 7.1"))

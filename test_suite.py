@@ -114,7 +114,7 @@ for case_id, imgs in cases.items():
 # --- Compute and print accuracies ---
 a1_accuracy = (a1_correct / (total_cases * 2) * 100) if total_cases > 0 else 0  # *2 because we check both R and D sides
 a2_accuracy = (a2_correct / (total_cases * 2) * 100) if total_cases > 0 else 0
-a3_accuracy = (correct_hits / total_gt_bboxes * 100) if total_gt_bboxes > 0 else 0
+a3_accuracy = 100 if (total_gt_bboxes == 0 and correct_hits == 0) else (correct_hits / total_gt_bboxes * 100) if total_gt_bboxes > 0 else 0
 
 print(f"Total cases: {total_cases}")
 print(f"Total ground‐truth boxes: {total_gt_bboxes}")
