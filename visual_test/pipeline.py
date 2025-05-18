@@ -62,32 +62,61 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
     diffs_D, diffs_R = [], []
     wrong_pos_seen = set()
 
+
     for idD, eD in enumerate(elems_D):
         if idD not in matches_DR:
-            diffs_D.append({'type': DiffType.MISSING_ELEMENT, 'bbox': eD['bbox']})
+            print("idD: ", idD, eD['bbox'])
+            
+            diffs_D.append({
+                'type': DiffType.MISSING_ELEMENT,
+                'bbox': eD['bbox']
+            })
+            # visualize_missing_element(img_D, img_R, eD, idD)
             continue
 
         idR = matches_DR[idD]
         eR = elems_R[idR]
-        parent = next((c['bbox'] for c in cont_D if contains(c['bbox'], eD['bbox'])), None)
 
-        pos_diff = compare_positions(eD, eR, parent, gray_D, gray_R, constants, wrong_pos_seen)
+        # --- find both parents ---
+        parent_D = next(
+            (c['bbox'] for c in cont_D if contains(c['bbox'], eD['bbox'])),
+            None
+        )
+        parent_R = next(
+            (c['bbox'] for c in cont_R if contains(c['bbox'], eR['bbox'])),
+            None
+        )
+
+        # --- position diff ---
+        pos_diff = compare_positions(
+            eD, eR,
+            parent_D, parent_R,
+            gray_D, gray_R,
+            constants,
+            wrong_pos_seen
+        )
         if pos_diff:
             diffs_R.append(pos_diff)
-            continue
+            # no longer `continue` here — we want size/text too
 
+        # --- size diff ---
         size_diff = compare_sizes(eD, eR, constants)
         if size_diff:
             diffs_R.append(size_diff)
 
+        # --- text diff (if atomic) ---
         if eD in atom_D:
             text_diff = compare_text(eD, eR, img_D, img_R)
             if text_diff:
                 diffs_R.append(text_diff)
 
+    # remaining extra-elements on R
     for j, eR in enumerate(elems_R):
         if j not in matched_R:
-            diffs_R.append({'type': DiffType.EXTRA_ELEMENT, 'bbox': eR['bbox']})
+            diffs_R.append({
+                'type': DiffType.EXTRA_ELEMENT,
+                'bbox': eR['bbox']
+            })
 
     diffs_D = filter_nested_missing_elements(diffs_D)
 
@@ -105,11 +134,41 @@ def visualize_results(img_D, img_R, diffs_D, diffs_R):
 
     for d in diffs_D:
         x, y, w, h = d['bbox']
-        ax[0].add_patch(plt.Rectangle((x, y), w, h, fill=False, edgecolor='r', lw=2))
+        rect = plt.Rectangle((x, y), w, h, fill=False, edgecolor='r', lw=2)
+        ax[0].add_patch(rect)
+        # Add text label above the rectangle
+        ax[0].text(x, y-5, d['type'], color='r', fontsize=8, 
+                  bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
+
     for d in diffs_R:
         x, y, w, h = d['bbox']
-        ax[1].add_patch(plt.Rectangle((x, y), w, h, fill=False, edgecolor='r', lw=2))
+        rect = plt.Rectangle((x, y), w, h, fill=False, edgecolor='r', lw=2)
+        ax[1].add_patch(rect)
+        # Add text label above the rectangle
+        ax[1].text(x, y-5, d['type'], color='r', fontsize=8,
+                  bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
+
+    plt.tight_layout()
     plt.show()
+
+def visualize_missing_element(img_D, img_R, eD, idD):
+    plt.ion()  # Turn on interactive mode
+    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+    ax[0].imshow(cv2.cvtColor(img_D, cv2.COLOR_BGR2RGB))
+    ax[0].set_title('Design')
+    ax[1].imshow(cv2.cvtColor(img_R, cv2.COLOR_BGR2RGB))
+    ax[1].set_title('Real')
+    plt.tight_layout()
+    
+    # Draw the missing element box
+    x, y, w, h = eD['bbox']
+    rect = plt.Rectangle((x, y), w, h, fill=False, edgecolor='r', lw=2)
+    ax[0].add_patch(rect)
+    ax[0].text(x, y-5, f"Missing {idD}", color='r', fontsize=8,
+              bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', pad=1))
+    
+    plt.show(block=True)  # Show and wait for user to close
+    plt.close()  # Close the figure after user interaction
 
 def convert_to_simple(dD, dR):
     return {

@@ -25,29 +25,58 @@ def closest(b, cont, axis, w_img, h_img):
     px, py, pw, ph = cont
     return min(b[0] - px, px + pw - (b[0] + b[2])) if axis == 'x' else min(b[1] - py, py + ph - (b[1] + b[3]))
 
-def compare_positions(eD, eR, parent, masked_D, masked_R, constants, wrong_pos_seen):
+# in visual_test/comparison.py
+
+def compare_positions(eD, eR, parent_D, parent_R, masked_D, masked_R, constants, wrong_pos_seen):
+    """
+    Compare element positions, now relative to each side’s container.
+    parent_D: bbox of the container in the design image (or None)
+    parent_R: bbox of the container in the real image   (or None)
+    """
     dx = eR['bbox'][0] - eD['bbox'][0]
     dy = eR['bbox'][1] - eD['bbox'][1]
-    sx, sy = abs(dx) > constants['POSITION_THRESHOLD'], abs(dy) > constants['POSITION_THRESHOLD']
-    
+    sx = abs(dx) > constants['POSITION_THRESHOLD']
+    sy = abs(dy) > constants['POSITION_THRESHOLD']
+
+    # no significant move → no diff
     if not (sx or sy):
         return None
-        
-    lvl = tuple(parent) if parent else ('root',)
-    if lvl in wrong_pos_seen:
+
+    # avoid duplicate reporting per element
+    key = tuple(eD['bbox'])
+    if key in wrong_pos_seen:
         return None
-        
-    wrong_pos_seen.add(lvl)
-    rec = {'bbox': eR['bbox'], 'type': DiffType.WRONG_POSITION_WITHIN if parent else DiffType.WRONG_POSITION}
-    
+    wrong_pos_seen.add(key)
+
+    rec = {
+        'bbox': eR['bbox'],
+        'type': DiffType.WRONG_POSITION_WITHIN if parent_D else DiffType.WRONG_POSITION
+    }
+
+    # helper to pick distances against the correct container
+    def dist(b, cont, axis, img_w, img_h):
+        if cont is None:
+            return min(b[0], img_w - (b[0] + b[2])) if axis=='x' else \
+                   min(b[1], img_h - (b[1] + b[3]))
+        px, py, pw, ph = cont
+        if axis == 'x':
+            return min(b[0] - px, px+pw - (b[0]+b[2]))
+        else:
+            return min(b[1] - py, py+ph - (b[1]+b[3]))
+
     if sx:
-        rec['OriginalDistanceX'] = closest(eD['bbox'], parent, 'x', masked_D.shape[1], masked_D.shape[0])
-        rec['CurrentDistanceX'] = closest(eR['bbox'], parent, 'x', masked_R.shape[1], masked_R.shape[0])
+        rec['OriginalDistanceX'] = dist(eD['bbox'], parent_D,
+                                        'x', masked_D.shape[1], masked_D.shape[0])
+        rec['CurrentDistanceX']  = dist(eR['bbox'], parent_R,
+                                        'x', masked_R.shape[1], masked_R.shape[0])
     if sy:
-        rec['OriginalDistanceY'] = closest(eD['bbox'], parent, 'y', masked_D.shape[1], masked_D.shape[0])
-        rec['CurrentDistanceY'] = closest(eR['bbox'], parent, 'y', masked_R.shape[1], masked_R.shape[0])
-        
+        rec['OriginalDistanceY'] = dist(eD['bbox'], parent_D,
+                                        'y', masked_D.shape[1], masked_D.shape[0])
+        rec['CurrentDistanceY']  = dist(eR['bbox'], parent_R,
+                                        'y', masked_R.shape[1], masked_R.shape[0])
+
     return rec
+
 
 def compare_sizes(eD, eR, constants):
     w0, h0 = eD['bbox'][2:4]

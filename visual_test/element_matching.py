@@ -176,42 +176,31 @@ def match_elements(elems_D, elems_R, masked_D, masked_R,
 
 
 def visualize_matching_result(img_D, img_R, elems_D, elems_R, matches_DR):
-    """
-    Visualize element matching results.
-    - Matched pairs: same random color on both images.
-    - Unmatched: black bbox.
-    """
-    fig, ax = plt.subplots(1, 2, figsize=(16, 8))
-    ax[0].imshow(img_D, cmap='gray')
-    ax[0].set_title('Design')
-    ax[1].imshow(img_R, cmap='gray')
-    ax[1].set_title('Real')
+    fig, (axD, axR) = plt.subplots(1, 2, figsize=(16, 8))
+    axD.imshow(img_D, cmap='gray'); axD.set_title('Design')
+    axR.imshow(img_R, cmap='gray'); axR.set_title('Real')
 
-    # Assign a color for each match
-    color_map = {}
+    # 1) Draw matched pairs in their own random color
     for i, j in matches_DR.items():
         color = tuple(random.random() for _ in range(3))
-        color_map[i] = color
-        color_map[j] = color  # Use same color for the pair
+        xD, yD, wD, hD = elems_D[i]['bbox']
+        xR, yR, wR, hR = elems_R[j]['bbox']
+        axD.add_patch(plt.Rectangle((xD, yD), wD, hD,
+                                    fill=False, edgecolor=color, lw=2))
+        axR.add_patch(plt.Rectangle((xR, yR), wR, hR,
+                                    fill=False, edgecolor=color, lw=2))
 
-    # Draw bboxes for design elements
-    for idx, elem in enumerate(elems_D):
-        x, y, w, h = elem['bbox']
-        if idx in matches_DR:
-            color = color_map[idx]
-        else:
-            color = (0, 0, 0)  # black for unmatched
-        ax[0].add_patch(plt.Rectangle((x, y), w, h, fill=False, edgecolor=color, lw=2))
-
-    # Draw bboxes for real elements
-    matched_R = set(matches_DR.values())
-    for idx, elem in enumerate(elems_R):
-        x, y, w, h = elem['bbox']
-        if idx in matched_R:
-            color = color_map[idx]
-        else:
-            color = (0, 0, 0)  # black for unmatched
-        ax[1].add_patch(plt.Rectangle((x, y), w, h, fill=False, edgecolor=color, lw=2))
+    # 2) Draw unmatched in black
+    unmatched_D = set(range(len(elems_D))) - set(matches_DR.keys())
+    unmatched_R = set(range(len(elems_R))) - set(matches_DR.values())
+    for idx in unmatched_D:
+        x, y, w, h = elems_D[idx]['bbox']
+        axD.add_patch(plt.Rectangle((x, y), w, h,
+                                    fill=False, edgecolor='black', lw=2))
+    for idx in unmatched_R:
+        x, y, w, h = elems_R[idx]['bbox']
+        axR.add_patch(plt.Rectangle((x, y), w, h,
+                                    fill=False, edgecolor='black', lw=2))
 
     plt.tight_layout()
-    plt.show() 
+    plt.show()
