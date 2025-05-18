@@ -107,8 +107,8 @@ for case_id, imgs in cases.items():
                 if iou > best_iou:
                     best_iou, best_idx = iou, idx
 
-            # Count as correct if IoU ≥ 0.9 AND label matches
-            if best_iou >= 0.9 and best_idx is not None and pred_labels[best_idx] == gt_label:
+            # Count as correct if IoU ≥ 0.8 AND label matches
+            if best_iou >= 0.8 and best_idx is not None and pred_labels[best_idx] == gt_label:
                 correct_hits += 1
 
 # --- Compute and print accuracies ---

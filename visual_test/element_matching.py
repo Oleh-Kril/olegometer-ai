@@ -171,7 +171,7 @@ def match_elements(elems_D, elems_R, masked_D, masked_R,
             if eD.get('children'):
                 unmatched_parents_D.add(i)
 
-    visualize_matching_result(masked_D, masked_R, elems_D, elems_R, matches_DR)
+    # visualize_matching_result(masked_D, masked_R, elems_D, elems_R, matches_DR)
     return matches_DR
 
 

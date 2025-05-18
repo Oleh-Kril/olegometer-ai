@@ -106,4 +106,4 @@ def run_single_case(case_name: str,
     }
 
 if __name__ == "__main__":
-    print(run_single_case("Case 7.1"))
+    print(run_single_case("Case 1.1"))

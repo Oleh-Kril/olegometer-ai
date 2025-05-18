@@ -122,7 +122,7 @@ def detect_elements_multiscale(gray, const, mask=None):
     if mask is not None:
         edges[mask == 0] = 0
 
-    kernel_sizes = const.get('EDGE_DILATION_SIZES', [11, 5, 3])
+    kernel_sizes = const.get('EDGE_DILATION_SIZES', [2, 20])
 
     level_elems = []
     vis_edges = []

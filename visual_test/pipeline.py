@@ -31,7 +31,7 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
             'CANNY_LOW_THRESHOLD': 5,
             'CANNY_HIGH_THRESHOLD': 20,
             'MIN_BBOX_AREA': 100,
-            'EDGE_DILATION_SIZES':[20, 1],
+            'EDGE_DILATION_SIZES':[5],
             'LOCATION_WEIGHT' : 0.15,
             'LOCATION_SIGMA_FRAC' : 0.10,
             'MASK_MIN_DIFF': 99,
@@ -56,6 +56,7 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
     hashes_R = [phash_region(gray_R, e['bbox']) for e in elems_R]
 
     matches_DR = match_elements(elems_D, elems_R, gray_D, gray_R, hashes_D, hashes_R, constants, gray_D.shape) #TODO: here shape can be different for gray_R
+    # matches_DR = match_elements(elems_D, elems_R, gray_D, gray_R, constants, gray_D.shape) #TODO: here shape can be different for gray_R
 
     matched_R = set(matches_DR.values())
     diffs_D, diffs_R = [], []
