@@ -245,6 +245,7 @@ def detect_text_full_image(
     height_ths: float = 0.7,
     min_confidence: float = 0.5
 ) -> list[dict]:
+    # return []
     """
     Detect text in a GUI screenshot using EasyOCR, with preprocessing
     for better contrast and resolution.
