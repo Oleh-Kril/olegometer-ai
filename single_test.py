@@ -108,4 +108,4 @@ def run_single_case(case_name: str,
     }
 
 if __name__ == "__main__":
-    print(run_single_case("Case 3.2"))
+    print(run_single_case("Case 6.2"))

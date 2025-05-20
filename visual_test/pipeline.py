@@ -7,8 +7,11 @@ from visual_test.image_utils import phash_region, contains
 from visual_test.masking import create_rectangular_diff_mask
 from visual_test.element_detection import detect_elements_multiscale
 from visual_test.element_matching import match_elements
-# from visual_test.pixel_based_matching import match_elements
-from visual_test.comparison import compare_positions, compare_sizes, compare_text, filter_nested_missing_elements, filter_position_differences
+from visual_test.comparison import (
+    compare_positions, compare_sizes, compare_text, 
+    filter_nested_missing_elements, filter_position_differences,
+    detect_text_full_image, visualize_text_detection
+)
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
 handler = logging.StreamHandler()
@@ -35,7 +38,8 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
             'LOCATION_WEIGHT' : 0.15,
             'LOCATION_SIGMA_FRAC' : 0.10,
             'MASK_MIN_DIFF': 99,
-            'WRAP_CONTAINER_SIZE_THRESHOLD': 0.2,
+            'WRAP_CONTAINER_SIZE_THRESHOLD': 0.5,
+            'WRAP_CONTAINER_DISTANCE_THRESHOLD': 200,
         }
 
     gray_D = cv2.cvtColor(img_D, cv2.COLOR_BGR2GRAY)
@@ -50,19 +54,26 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
         logger.info(f"Mask coverage {mask_coverage:.2f}% exceeds threshold {constants['MASK_MIN_DIFF']}%, returning no differences")
         return [], []
 
+    # Detect text in both images
+    text_boxes_D = detect_text_full_image(img_D, mask=mask)
+    text_boxes_R = detect_text_full_image(img_R, mask=mask)
+    
+    # Visualize text detection results
+    # visualize_text_detection(img_D, text_boxes_D, "Design Image Text Detection")
+    # visualize_text_detection(img_R, text_boxes_R, "Real Image Text Detection")
+
     elems_D, cont_D, atom_D, edges_D, _ = detect_elements_multiscale(gray_D, constants, mask=mask)
     elems_R, cont_R, atom_R, edges_R, _ = detect_elements_multiscale(gray_R, constants, mask=mask)
 
     hashes_D = [phash_region(gray_D, e['bbox']) for e in elems_D]
     hashes_R = [phash_region(gray_R, e['bbox']) for e in elems_R]
 
-    matches_DR = match_elements(elems_D, elems_R, gray_D, gray_R, hashes_D, hashes_R, constants, gray_D.shape) #TODO: here shape can be different for gray_R
-    # matches_DR = match_elements(elems_D, elems_R, gray_D, gray_R, constants, gray_D.shape) #TODO: here shape can be different for gray_R
+    matches_DR = match_elements(elems_D, elems_R, gray_D, gray_R, hashes_D, hashes_R, constants, gray_D.shape,
+                              text_boxes_D=text_boxes_D, text_boxes_R=text_boxes_R)
 
     matched_R = set(matches_DR.values())
     diffs_D, diffs_R = [], []
     wrong_pos_seen = set()
-
 
     for idD, eD in enumerate(elems_D):
         if idD not in matches_DR:
@@ -80,11 +91,11 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
 
         # --- find both parents ---
         parent_D = next(
-            (c['bbox'] for c in cont_D if contains(c['bbox'], eD['bbox'])),
+            (c['bbox'] for c in cont_D if contains(c['bbox'], eD['bbox']) and c['bbox'] != eD['bbox']),
             None
         )
         parent_R = next(
-            (c['bbox'] for c in cont_R if contains(c['bbox'], eR['bbox'])),
+            (c['bbox'] for c in cont_R if contains(c['bbox'], eR['bbox']) and c['bbox'] != eR['bbox']),
             None
         )
 
@@ -107,7 +118,7 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
 
         # --- text diff (if atomic) ---
         if eD in atom_D:
-            text_diff = compare_text(eD, eR, img_D, img_R)
+            text_diff = compare_text(eD, eR, text_boxes_D, text_boxes_R)
             if text_diff:
                 diffs_R.append(text_diff)
 
@@ -132,9 +143,9 @@ def process_images(img_D: np.ndarray, img_R: np.ndarray, constants: dict | None 
     ]
 
     diffs_D = filter_nested_missing_elements(diffs_D)
-    # diffs_R = filter_position_differences(diffs_R)
+    diffs_R = filter_position_differences(diffs_R, elems_R)
 
-    visualize_results(img_D, img_R, diffs_D, diffs_R)
+    # visualize_results(img_D, img_R, diffs_D, diffs_R)
 
     logger.info(f"Missing on R: {len(diffs_D)}, diffs on R: {len(diffs_R)}")
     return diffs_D, diffs_R

@@ -76,7 +76,8 @@ def visualize_candidates(roiD, candidates, distances, title=""):
     plt.show()
 
 def match_elements(elems_D, elems_R, masked_D, masked_R,
-                   hashes_D, hashes_R, constants, img_shape):
+                   hashes_D, hashes_R, constants, img_shape,
+                   text_boxes_D=None, text_boxes_R=None):
     """
     Compare histogram, SSIM, (and optionally location).
     Returns a dict mapping ORIGINAL-D-index → ORIGINAL-R-index.
