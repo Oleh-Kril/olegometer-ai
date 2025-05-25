@@ -61,6 +61,7 @@ for img in images:
 # --- Evaluation counters ---
 total_gt_bboxes = 0
 correct_hits    = 0
+correct_labels  = []  # Track correctly found labels in order
 a1_correct      = 0
 a2_correct      = 0
 total_cases     = 0
@@ -125,23 +126,35 @@ for case_id, imgs in cases.items():
         if len(gt_bboxes) == len(pred_bboxes) and set(gt_labels) == set(pred_labels):
             a2_correct += 1
 
-        # A3: Original IoU-based accuracy
-        for gt_box, gt_label in zip(gt_bboxes, gt_labels):
-            best_iou = 0.0
-            best_idx = None
-            for idx, pred_box in enumerate(pred_bboxes):
-                iou = compute_iou(gt_box, pred_box)
-                if iou > best_iou:
-                    best_iou, best_idx = iou, idx
+        # A3: Label matching and IoU-based accuracy
+        # Create a copy of pred_labels for matching
+        remaining_pred_labels = pred_labels.copy()
+        
+        # First pass: Match labels exactly
+        for gt_label in gt_labels:
+            if gt_label in remaining_pred_labels:
+                correct_labels.append(gt_label)
+                # Remove the matched label from remaining predictions
+                remaining_pred_labels.remove(gt_label)
 
-            # Count as correct if IoU ≥ 0.8 AND label matches
-            if best_iou >= 0.7 and best_idx is not None and pred_labels[best_idx] == gt_label:
-                correct_hits += 1
+        # Second pass: Calculate IoU for matched labels
+        for gt_box, gt_label in zip(gt_bboxes, gt_labels):
+            if gt_label in correct_labels:  # Only check IoU for matched labels
+                best_iou = 0.0
+                best_idx = None
+                for idx, pred_box in enumerate(pred_bboxes):
+                    iou = compute_iou(gt_box, pred_box)
+                    if iou > best_iou:
+                        best_iou, best_idx = iou, idx
+
+                # Count as correct if IoU ≥ 0.7
+                if best_iou >= 0.7 and best_idx is not None:
+                    correct_hits += 1
 
 # --- Compute and print accuracies ---
 a1_accuracy = (a1_correct / total_cases * 100) if total_cases > 0 else 0
 a2_accuracy = (a2_correct / (total_cases * 2) * 100) if total_cases > 0 else 0
-a3_accuracy = 100 if (total_gt_bboxes == 0 and correct_hits == 0) else (correct_hits / total_gt_bboxes * 100) if total_gt_bboxes > 0 else 0
+a3_accuracy = 100 if (total_gt_bboxes == 0 and correct_hits == 0) else (correct_hits / len(correct_labels) * 100) if correct_labels else 0
 
 # Calculate timing statistics
 avg_time = sum(comparison_times) / len(comparison_times) if comparison_times else 0
